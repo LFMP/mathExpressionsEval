@@ -60,6 +60,9 @@ pub fn lexer(mut _entrada : &String ) -> Vec<Token> {
           tokens.push(Token::Fecha);
           aux.next();
         },
+      ' ' => {
+          aux.next();
+        },
       '0'...'9' => {
         _is_number = true;
         let mut number: Vec<char> = Vec::new();
@@ -120,10 +123,12 @@ pub fn parser(_tokens : Vec<Token> ) -> Vec<Token> {
               _is_close = true;
               break;
             },
+            Token::Abre => {
+              continue;
+            }
             _ => fila.push(op)
           }
         }
-        assert!(_is_close);
       }
     }
   }
