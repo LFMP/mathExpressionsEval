@@ -8,13 +8,13 @@ pub enum Operators {
 
 #[derive(Debug, PartialEq)]
 pub enum Tree {
-  Num(Token),
+  Num(i64),
   Operacao(Token,Box<Tree>,Box<Tree>)
 }
 
 #[derive(Debug, PartialEq)]
 pub enum Token {
-  Num(String),
+  Num(i64),
   Abre,
   Fecha,
   Operador(Operators)
@@ -34,13 +34,13 @@ fn to_tree(mut _rpn : Vec<Token>) -> Vec<Tree> {
   
   let mut saida: Vec<Tree> = Vec::new();
 
-  for chars in _rpn {
-    match chars {
-      Token::Num(_)=>{
-        saida.push(Tree::Num(chars));
+  for tokens in _rpn {
+    match tokens {
+      Token::Num(x)=>{
+        saida.push(Tree::Num(x));
       },
       Token::Operador(_)=>{
-        let _num = chars; 
+        let _num = tokens; 
         let _right = Box::new(saida.pop().unwrap());
         let _left = Box::new(saida.pop().unwrap());
         saida.push(Tree::Operacao(_num,_left,_right));
@@ -88,7 +88,7 @@ pub fn lexer(mut _entrada : &String ) -> Vec<Token> {
         },
       '0'...'9' => {
         _is_number = true;
-        let mut number: Vec<char> = Vec::new();
+        let mut number = String::new();
         while _is_number {
           if let Some(ch) = aux.peek(){
             match ch {
@@ -102,7 +102,7 @@ pub fn lexer(mut _entrada : &String ) -> Vec<Token> {
             }
           }
         }
-        tokens.push(Token::Num(number.iter().cloned().collect()))
+        tokens.push(Token::Num(number.parse().unwrap()));
       },
       '\n'=> {
         break;
