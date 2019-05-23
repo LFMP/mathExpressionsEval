@@ -7,6 +7,12 @@ pub enum Operators {
 }
 
 #[derive(Debug, PartialEq)]
+pub enum Tree {
+  Num(Token),
+  Operacao(Token,Box<Tree>,Box<Tree>)
+}
+
+#[derive(Debug, PartialEq)]
 pub enum Token {
   Num(String),
   Abre,
@@ -24,10 +30,27 @@ impl Token {
   }
 }
 
-#[derive(Debug, PartialEq)]
-pub enum Tree {
-  Num,
-  Operacao(Operators,Box<Tree>,Box<Tree>)
+fn to_tree(mut _rpn : Vec<Token>) -> Vec<Tree> {
+  
+  let mut saida: Vec<Tree> = Vec::new();
+
+  for chars in _rpn {
+    match chars {
+      Token::Num(_)=>{
+        saida.push(Tree::Num(chars));
+      },
+      Token::Operador(_)=>{
+        let _num = chars; 
+        let _right = Box::new(saida.pop().unwrap());
+        let _left = Box::new(saida.pop().unwrap());
+        saida.push(Tree::Operacao(_num,_left,_right));
+      },
+      _ => {
+        break;
+      }
+    }
+  }
+  saida
 }
 
 pub fn lexer(mut _entrada : &String ) -> Vec<Token> {
@@ -92,7 +115,7 @@ pub fn lexer(mut _entrada : &String ) -> Vec<Token> {
   tokens
 }
 
-pub fn parser(_tokens : Vec<Token> ) -> Vec<Token> {
+pub fn parser(_tokens : Vec<Token> ) -> Vec<Tree> {
   let mut fila: Vec<Token> = vec![];
   let mut pilha: Vec<Token> = vec![];
 
@@ -135,7 +158,8 @@ pub fn parser(_tokens : Vec<Token> ) -> Vec<Token> {
   while let Some(token) = pilha.pop() {
     fila.push(token);
   }
-  fila
+  let saida = to_tree(fila);
+  saida
 }
 
 pub fn eval_step(_expressao : &[Vec<Tree>]) -> Vec<Tree> {
