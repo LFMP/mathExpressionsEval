@@ -33,6 +33,24 @@ impl Token {
   }
 }
 
+impl Operators {
+  fn precedencia(&self) -> usize {
+    match self{
+      Operators::Div | Operators::Mul => 2,
+      Operators::Soma | Operators::Sub => 1
+    }
+  }
+
+  fn to_char(&self) -> char {
+    match self{
+      Operators::Div => '/',
+      Operators::Mul => '*',
+      Operators::Soma => '+',
+      Operators::Sub => '-'
+    }
+  }
+}
+
 fn to_tree(mut _rpn : Vec<Token>) -> Tree {
   
   let mut saida: Vec<Tree> = Vec::new();
@@ -196,16 +214,66 @@ impl Tree {
           (_,Tree::Operacao(_,_,_)) => {
             Tree::Operacao(op,Box::new(l),Box::new(r.eval_step()))
           },
-          _=> panic!("aaaaaa")
+          _=> panic!("Árvore mal formada")
         }
       }
     }
   }
-}
-
-pub fn to_string(_expressao : Vec<Tree>) -> String {
-  let converted:String = String::new();
-  converted
+  pub fn to_string(&self, buffer : &mut String){
+    match self {
+      Tree::Num(x) => {
+        buffer.push_str(&x.to_string());
+      },
+      Tree::Operacao(op, box left, box right) => {
+        match (&left,&right) {
+          (Tree::Operacao(_,_,_),Tree::Operacao(_,_,_)) => {
+            buffer.push('(');
+            left.to_string(buffer);
+            buffer.push(')');
+            buffer.push(' ');
+            buffer.push(op.to_char());
+            buffer.push(' ');
+            buffer.push('(');
+            right.to_string(buffer);
+            buffer.push(')');
+          },
+          (Tree::Operacao(n_op,_,_),Tree::Num(_)) => {
+            if op.precedencia() > n_op.precedencia() {
+              buffer.push('(');
+              left.to_string(buffer);
+              buffer.push(')');
+              buffer.push(' ');
+              buffer.push(op.to_char());
+              buffer.push(' ');
+              right.to_string(buffer);
+            }else{
+              left.to_string(buffer);
+              buffer.push(' ');
+              buffer.push(op.to_char());
+              buffer.push(' ');
+              right.to_string(buffer);
+            }
+          },
+          (Tree::Num(_),Tree::Operacao(n_op,_,_)) => {
+            left.to_string(buffer);
+            buffer.push(' ');
+            buffer.push(op.to_char());
+            buffer.push(' ');
+            buffer.push('(');
+            right.to_string(buffer);
+            buffer.push(')');
+          },
+          _ => {
+            left.to_string(buffer);
+            buffer.push(' ');
+            buffer.push(op.to_char());
+            buffer.push(' ');
+            right.to_string(buffer);
+          }
+        }
+      }
+    }
+  }
 }
 
 #[cfg(test)]
