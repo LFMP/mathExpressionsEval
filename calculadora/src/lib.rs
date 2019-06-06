@@ -1,4 +1,5 @@
 #![feature(box_patterns)]
+#![feature(box_syntax)]
 
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub enum Operators {
@@ -213,15 +214,59 @@ mod test{
 
   #[test]
   fn lexer_assert() {
-    let entrada = String::from("4 / 2 + 7");
-    let saida = vec![Token::Num(4),Token::Operador(Operators::Div),Token::Num(2),Token::Operador(Operators::Soma),Token::Num(7)];
+    let mut entrada = String::from("4 / 2 + 7");
+    let mut saida = vec![
+      Token::Num(4),Token::Operador(Operators::Div),Token::Num(2),
+      Token::Operador(Operators::Soma),Token::Num(7)
+      ];
+    
     assert_eq!(lexer(entrada),saida);
 
-    assert_eq!(lexer(String::from("(10 / 3 + 23) * (1 - 4)")),
-    vec![Token::Abre, Token::Num(10), Token::Operador(Operators::Div), Token::Num(3), Token::Operador(Operators::Soma),
-    Token::Num(23), Token::Fecha, Token::Operador(Operators::Mul), Token::Abre, Token::Num(1),
-    Token::Operador(Operators::Sub), Token::Num(4), Token::Fecha]
+    entrada = String::from("(10 / 3 + 23) * (1 - 4)");
+    saida = vec![
+      Token::Abre, Token::Num(10), Token::Operador(Operators::Div), Token::Num(3),
+      Token::Operador(Operators::Soma), Token::Num(23), Token::Fecha,
+      Token::Operador(Operators::Mul), Token::Abre, Token::Num(1),
+      Token::Operador(Operators::Sub), Token::Num(4), Token::Fecha
+      ];
+    
+    assert_eq!(lexer(entrada),saida);
+  }
+  #[test]
+  fn parser_assert(){
+    let mut entrada = vec![
+      Token::Num(4), Token::Operador(Operators::Div), Token::Num(2),
+      Token::Operador(Operators::Soma), Token::Num(7)
+    ];
+    let mut saida = Tree::Operacao(
+      Operators::Soma,
+      box Tree::Operacao(Operators::Div, box Tree::Num(4), box Tree::Num(2)),
+      box Tree::Num(7)
     );
+
+    assert_eq!(parser(entrada), saida);
+
+    entrada = vec![
+      Token::Abre, Token::Num(10), Token::Operador(Operators::Div),
+      Token::Num(3), Token::Operador(Operators::Soma), Token::Num(23),
+      Token::Fecha, Token::Operador(Operators::Mul), Token::Abre, Token::Num(1),
+      Token::Operador(Operators::Sub), Token::Num(4), Token::Fecha
+    ];
+    saida = Tree::Operacao(
+      Operators::Mul,
+      box Tree::Operacao(
+        Operators::Soma,
+        box Tree::Operacao(Operators::Div, box Tree::Num(10), box Tree::Num(3)),
+        box Tree::Num(23)
+      ),
+      box Tree::Operacao(
+        Operators::Sub,
+        box Tree::Num(1),
+        box Tree::Num(4)
+      )
+    );
+
+    assert_eq!(parser(entrada), saida)
   }
 }
 
