@@ -254,7 +254,7 @@ impl Tree {
               right.to_string(buffer);
             }
           },
-          (Tree::Num(_),Tree::Operacao(n_op,_,_)) => {
+          (Tree::Num(_),Tree::Operacao(_,_,_)) => {
             left.to_string(buffer);
             buffer.push(' ');
             buffer.push(op.to_char());
@@ -308,7 +308,11 @@ mod test{
     ];
     let mut saida = Tree::Operacao(
       Operators::Soma,
-      box Tree::Operacao(Operators::Div, box Tree::Num(4), box Tree::Num(2)),
+      box Tree::Operacao(
+        Operators::Div,
+        box Tree::Num(4),
+        box Tree::Num(2)
+      ),
       box Tree::Num(7)
     );
 
@@ -324,7 +328,11 @@ mod test{
       Operators::Mul,
       box Tree::Operacao(
         Operators::Soma,
-        box Tree::Operacao(Operators::Div, box Tree::Num(10), box Tree::Num(3)),
+        box Tree::Operacao(
+          Operators::Div,
+          box Tree::Num(10),
+          box Tree::Num(3)
+        ),
         box Tree::Num(23)
       ),
       box Tree::Operacao(
@@ -335,6 +343,60 @@ mod test{
     );
 
     assert_eq!(parser(entrada), saida)
+  }
+
+  #[test]
+  fn eval_step_assert(){
+    let mut entrada = Tree::Operacao(
+      Operators::Soma,
+      box Tree::Operacao(
+        Operators::Div,
+        box Tree::Num(4),
+        box Tree::Num(2)
+      ),
+      box Tree::Num(7)
+    );
+    let mut saida = Tree::Operacao(
+      Operators::Soma,
+      box Tree::Num(2),
+      box Tree::Num(7)
+    );
+
+    assert_eq!(entrada.eval_step(), saida);
+
+    entrada = Tree::Operacao(
+      Operators::Mul,
+      box Tree::Operacao(
+        Operators::Soma,
+        box Tree::Operacao(
+          Operators::Div,
+          box Tree::Num(10),
+          box Tree::Num(3)
+        ),
+        box Tree::Num(23)
+      ),
+      box Tree::Operacao(
+        Operators::Sub,
+        box Tree::Num(1),
+        box Tree::Num(4)
+      )
+    );
+
+    saida = Tree::Operacao(
+      Operators::Mul,
+      box Tree::Operacao(
+        Operators::Soma,
+        box Tree::Num(3),
+        box Tree::Num(23)
+      ),
+      box Tree::Operacao(
+        Operators::Sub,
+        box Tree::Num(1),
+        box Tree::Num(4)
+      )
+    );
+
+    assert_eq!(entrada.eval_step(), saida);
   }
 }
 
