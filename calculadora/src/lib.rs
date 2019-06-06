@@ -1,4 +1,6 @@
-#[derive(Debug, PartialEq)]
+#![feature(box_patterns)]
+
+#[derive(Debug, PartialEq, Copy, Clone)]
 pub enum Operators {
   Soma,
   Sub,
@@ -6,13 +8,13 @@ pub enum Operators {
   Div,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Tree {
   Num(i64),
-  Operacao(Token,Box<Tree>,Box<Tree>)
+  Operacao(Operators, Box<Tree>, Box<Tree>)
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Copy, Clone)]
 pub enum Token {
   Num(i64),
   Abre,
@@ -30,7 +32,7 @@ impl Token {
   }
 }
 
-fn to_tree(mut _rpn : Vec<Token>) -> Vec<Tree> {
+fn to_tree(mut _rpn : Vec<Token>) -> Tree {
   
   let mut saida: Vec<Tree> = Vec::new();
 
@@ -39,21 +41,20 @@ fn to_tree(mut _rpn : Vec<Token>) -> Vec<Tree> {
       Token::Num(x)=>{
         saida.push(Tree::Num(x));
       },
-      Token::Operador(_)=>{
-        let _num = tokens; 
+      Token::Operador(x)=>{
         let _right = Box::new(saida.pop().unwrap());
         let _left = Box::new(saida.pop().unwrap());
-        saida.push(Tree::Operacao(_num,_left,_right));
+        saida.push(Tree::Operacao(x,_left,_right));
       },
       _ => {
         break;
       }
     }
   }
-  saida
+  saida.pop().unwrap()
 }
 
-pub fn lexer(mut _entrada : &String ) -> Vec<Token> {
+pub fn lexer(mut _entrada : String ) -> Vec<Token> {
   let mut tokens: Vec<Token> = Vec::new();
   let mut _is_number = false;
   let mut aux = _entrada.trim_start().chars().peekable();
@@ -86,20 +87,24 @@ pub fn lexer(mut _entrada : &String ) -> Vec<Token> {
       ' ' => {
           aux.next();
         },
-      '0'...'9' => {
+      '0'..='9' => {
         _is_number = true;
         let mut number = String::new();
         while _is_number {
           if let Some(ch) = aux.peek(){
             match ch {
-              '0'...'9' => {
+              '0'..='9' => {
                 number.push(*ch)
               },
-              _ => _is_number = false
+              _ => {
+                _is_number = false;
+              }
             }
             if _is_number {
               aux.next();
             }
+          }else{
+            break;
           }
         }
         tokens.push(Token::Num(number.parse().unwrap()));
@@ -115,7 +120,7 @@ pub fn lexer(mut _entrada : &String ) -> Vec<Token> {
   tokens
 }
 
-pub fn parser(_tokens : Vec<Token> ) -> Vec<Tree> {
+pub fn parser(_tokens : Vec<Token> ) -> Tree {
   let mut fila: Vec<Token> = vec![];
   let mut pilha: Vec<Token> = vec![];
 
@@ -162,21 +167,61 @@ pub fn parser(_tokens : Vec<Token> ) -> Vec<Tree> {
   saida
 }
 
-pub fn eval_step(_expressao : &[Vec<Tree>]) -> Vec<Tree> {
-  let avaliado:Vec<Tree> = Vec::new();
-  avaliado
+impl Tree {
+  pub fn eval_step(self) -> Tree{
+    match self{
+      Tree::Num(_) => self,
+      Tree::Operacao(op, box Tree::Num(a), box Tree::Num(b)) => {
+        match &op {
+          Operators::Div => {
+            Tree::Num(a/b)
+          },
+          Operators::Mul => {
+            Tree::Num(a*b)
+          },
+          Operators::Sub => {
+            Tree::Num(a-b)
+          },
+          Operators::Soma => {
+            Tree::Num(a+b)
+          }
+        }
+      },
+      Tree::Operacao(op, box l, box r) => {
+        match (&l,&r) {
+          (Tree::Operacao(_,_,_),_) => {
+            Tree::Operacao(op,Box::new(l.eval_step()),Box::new(r))
+          },
+          (_,Tree::Operacao(_,_,_)) => {
+            Tree::Operacao(op,Box::new(l),Box::new(r.eval_step()))
+          },
+          _=> panic!("aaaaaa")
+        }
+      }
+    }
+  }
 }
 
-pub fn to_string(_expressao : &[Vec<Tree>]) -> String {
+pub fn to_string(_expressao : Vec<Tree>) -> String {
   let converted:String = String::new();
   converted
 }
 
 #[cfg(test)]
-mod tests {
-  
+mod test{
+  use super::*;
+
   #[test]
-  fn test_lexer(){
-    //assert_eq!(vec!["31", "*", "(", "4", "+", "10", ")"], lexer("31  * (4 + 10)"));
+  fn lexer_assert() {
+    let entrada = String::from("4 / 2 + 7");
+    let saida = vec![Token::Num(4),Token::Operador(Operators::Div),Token::Num(2),Token::Operador(Operators::Soma),Token::Num(7)];
+    assert_eq!(lexer(entrada),saida);
+
+    assert_eq!(lexer(String::from("(10 / 3 + 23) * (1 - 4)")),
+    vec![Token::Abre, Token::Num(10), Token::Operador(Operators::Div), Token::Num(3), Token::Operador(Operators::Soma),
+    Token::Num(23), Token::Fecha, Token::Operador(Operators::Mul), Token::Abre, Token::Num(1),
+    Token::Operador(Operators::Sub), Token::Num(4), Token::Fecha]
+    );
   }
 }
+
