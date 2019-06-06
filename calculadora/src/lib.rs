@@ -398,5 +398,37 @@ mod test{
 
     assert_eq!(entrada.eval_step(), saida);
   }
-}
 
+  #[test]
+  fn to_string_assert(){
+    let mut entrada = Tree::Operacao(
+      Operators::Soma,
+      box Tree::Num(2),
+      box Tree::Num(7)
+    );
+    let buffer = &mut String::new();
+    let mut saida = String::from("2 + 7");
+    entrada.to_string(buffer);
+
+    assert_eq!(buffer, &mut saida);
+    buffer.clear();
+
+    entrada = Tree::Operacao(
+      Operators::Mul,
+      box Tree::Operacao(
+        Operators::Soma,
+        box Tree::Num(3),
+        box Tree::Num(23)
+      ),
+      box Tree::Operacao(
+        Operators::Sub,
+        box Tree::Num(1),
+        box Tree::Num(4)
+      )
+    );
+    saida = String::from("(3 + 23) * (1 - 4)");
+    entrada.to_string(buffer);
+    assert_eq!(buffer, &mut saida);
+    buffer.clear();
+  }
+}

@@ -12,12 +12,12 @@ fn main() {
 	let mut expressao = parser(lexer(input));
 
 	expressao.to_string(&mut saida);
-	println!("{:?}", saida);
+	println!("{}", saida);
 	saida.clear();
 
 	expressao = expressao.eval_step();
 	
 	expressao.to_string(&mut saida);
-	println!("{:?}", saida);
+	println!("{}", saida);
 	saida.clear();
 }
